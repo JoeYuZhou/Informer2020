@@ -36,6 +36,9 @@ bash_docker:
 run_informer:
 	make run_module module="bash scripts/ETTh1.sh"
 
+one_command:
+	make dataset && make init && make run_informer
+	
 .require-module:
 ifndef module
 	$(error module is required)
