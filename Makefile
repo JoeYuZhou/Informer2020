@@ -1,16 +1,17 @@
 IMAGE := informer
 ROOT := $(shell dirname $(realpath $(firstword ${MAKEFILE_LIST})))
-PARENT_ROOT := $(shell dirname ${ROOT})
-PORT := 8888
+# PARENT_ROOT := $(shell dirname ${ROOT})
+# PORT := 8888
 
 DOCKER_PARAMETERS := \
-	--user $(shell id -u) \
 	-v ${ROOT}:/app \
 	-w /app \
 	-e HOME=/tmp
 
 init:
 	docker build -t ${IMAGE} .
+# 	remove dangling image if exists
+	docker image prune -f
 
 dataset:
 	mkdir -p data/ETT && \
@@ -22,15 +23,18 @@ dataset:
 		wget -O data/ETT/WTH.csv "https://drive.google.com/uc?export=download&id=1UBRz-aM_57i_KCC-iaSWoKDPTGGv6EaG"
 
 jupyter:
-	docker run -d --rm ${DOCKER_PARAMETERS} -e HOME=/tmp -p ${PORT}:8888 ${IMAGE} \
+	docker run -d --rm --gpus all ${DOCKER_PARAMETERS} -e HOME=/tmp -p ${PORT}:8888 ${IMAGE} \
 		bash -c "jupyter lab --ip=0.0.0.0 --no-browser --NotebookApp.token=''"
 
 run_module: .require-module
-	docker run -i --rm ${DOCKER_PARAMETERS} \
+	docker run -i --rm --gpus all ${DOCKER_PARAMETERS} \
 		${IMAGE} ${module}
 
 bash_docker:
-	docker run -it --rm ${DOCKER_PARAMETERS} ${IMAGE}
+	docker run -it --rm --gpus all ${DOCKER_PARAMETERS} ${IMAGE}
+
+run_informer:
+	make run_module module="bash scripts/ETTh1.sh"
 
 .require-module:
 ifndef module
